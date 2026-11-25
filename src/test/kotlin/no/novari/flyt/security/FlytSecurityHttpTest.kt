@@ -20,6 +20,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -119,6 +120,21 @@ class FlytSecurityHttpTest {
         assertStatus(
             "/api/intern-klient/test",
             TestTokens.client(INTERNAL_CLIENT_ID, TestTokens::withoutExpiry),
+            HttpStatus.UNAUTHORIZED,
+        )
+    }
+
+    @Test
+    fun `client token whose aud is not its sub gives 401`() {
+        val otherAudience: (JwtClaimsSet.Builder) -> Unit = { it.audience(listOf("another-client")) }
+        assertStatus(
+            "/api/intern-klient/test",
+            TestTokens.client(INTERNAL_CLIENT_ID, otherAudience),
+            HttpStatus.UNAUTHORIZED,
+        )
+        assertStatus(
+            "/api/acos/test",
+            TestTokens.client(SOURCE_APPLICATION_CLIENT_ID, otherAudience),
             HttpStatus.UNAUTHORIZED,
         )
     }
