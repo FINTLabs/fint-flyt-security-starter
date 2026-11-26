@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.converter.Converter
+import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl
@@ -123,15 +124,21 @@ public class FlytSecurityAutoConfiguration {
 
     @Bean
     @Order(4)
-    @ConditionalOnProperty("novari.flyt.security.external.expected-client-id")
+    @ConditionalOnProperty("novari.flyt.security.external.source-application")
     public fun flytSourceApplicationFilterChain(
         http: HttpSecurity,
         jwtDecoder: JwtDecoder,
         properties: FlytSecurityProperties,
+        environment: Environment,
     ): SecurityFilterChain {
         val external = properties.external
-        val authority = SourceApplicationAuthority.of(requireNotNull(external.sourceApplicationId))
-        val validator = FlytTokenValidators.sourceApplication(requireNotNull(external.expectedClientId))
+        val sourceApplication = requireNotNull(external.sourceApplication)
+        val expectedClientId = environment.getProperty(sourceApplication.clientIdProperty)
+        require(!expectedClientId.isNullOrBlank()) {
+            "${sourceApplication.clientIdProperty} must be set for novari.flyt.security.external.source-application"
+        }
+        val authority = SourceApplicationAuthority.of(sourceApplication.id)
+        val validator = FlytTokenValidators.sourceApplication(expectedClientId)
         return http
             .common()
             .securityMatcher(OrRequestMatcher(external.paths.map(::path)))

@@ -4,6 +4,9 @@ fint:
     authorization:
       sso:
         client-id: fint-flyt-authorization-oauth2-client
+    acos:
+      sso:
+        client-id: fint-flyt-acos-oauth2-client
 
 novari:
   flyt:
@@ -14,8 +17,7 @@ novari:
         audience: fint-flyt-auth-forward-sso
       external:
         paths: /api/acos/**
-        source-application-id: 1
-        expected-client-id: fint-flyt-acos-oauth2-client
+        source-application: ACOS
       public-paths: /swagger-ui.html
 
 management:

@@ -13,7 +13,7 @@ public class no/novari/flyt/security/FlytSecurityAutoConfiguration {
 	public fun flytDenyAllFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;)Lorg/springframework/security/web/SecurityFilterChain;
 	public fun flytInternalClientFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;Lorg/springframework/security/oauth2/jwt/JwtDecoder;Lno/novari/flyt/security/FlytSecurityProperties;)Lorg/springframework/security/web/SecurityFilterChain;
 	public fun flytPublicFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;Lno/novari/flyt/security/FlytSecurityProperties;)Lorg/springframework/security/web/SecurityFilterChain;
-	public fun flytSourceApplicationFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;Lorg/springframework/security/oauth2/jwt/JwtDecoder;Lno/novari/flyt/security/FlytSecurityProperties;)Lorg/springframework/security/web/SecurityFilterChain;
+	public fun flytSourceApplicationFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;Lorg/springframework/security/oauth2/jwt/JwtDecoder;Lno/novari/flyt/security/FlytSecurityProperties;Lorg/springframework/core/env/Environment;)Lorg/springframework/security/web/SecurityFilterChain;
 	public fun flytUserFilterChain (Lorg/springframework/security/config/annotation/web/builders/HttpSecurity;Lorg/springframework/security/oauth2/jwt/JwtDecoder;Lno/novari/flyt/security/FlytSecurityProperties;Lno/novari/flyt/security/UserRoleResolver;)Lorg/springframework/security/web/SecurityFilterChain;
 	public fun roleHierarchy ()Lorg/springframework/security/access/hierarchicalroles/RoleHierarchy;
 	public fun userRoleResolver (Lno/novari/flyt/security/FlytSecurityProperties;)Lno/novari/flyt/security/UserRoleResolver;
@@ -41,11 +41,10 @@ public final class no/novari/flyt/security/FlytSecurityProperties$Authorization 
 
 public final class no/novari/flyt/security/FlytSecurityProperties$External {
 	public fun <init> ()V
-	public fun <init> (Ljava/util/List;Ljava/lang/Long;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/lang/Long;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getExpectedClientId ()Ljava/lang/String;
+	public fun <init> (Ljava/util/List;Lno/novari/flyt/security/SourceApplication;)V
+	public synthetic fun <init> (Ljava/util/List;Lno/novari/flyt/security/SourceApplication;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getPaths ()Ljava/util/List;
-	public final fun getSourceApplicationId ()Ljava/lang/Long;
+	public final fun getSourceApplication ()Lno/novari/flyt/security/SourceApplication;
 }
 
 public final class no/novari/flyt/security/FlytSecurityProperties$InternalClient {
@@ -77,6 +76,32 @@ public final class no/novari/flyt/security/FlytSecurityProperties$User {
 	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAudience ()Ljava/lang/String;
+}
+
+public final class no/novari/flyt/security/SourceApplication : java/lang/Enum {
+	public static final field ACOS Lno/novari/flyt/security/SourceApplication;
+	public static final field ALTINN Lno/novari/flyt/security/SourceApplication;
+	public static final field CONEXUS Lno/novari/flyt/security/SourceApplication;
+	public static final field Companion Lno/novari/flyt/security/SourceApplication$Companion;
+	public static final field DIGISAK Lno/novari/flyt/security/SourceApplication;
+	public static final field EAPPLY Lno/novari/flyt/security/SourceApplication;
+	public static final field EGRUNNERVERV Lno/novari/flyt/security/SourceApplication;
+	public static final field FSKYSS Lno/novari/flyt/security/SourceApplication;
+	public static final field HMSREG Lno/novari/flyt/security/SourceApplication;
+	public static final field ISY_GRAVING Lno/novari/flyt/security/SourceApplication;
+	public static final field SIDE Lno/novari/flyt/security/SourceApplication;
+	public static final field VIGO Lno/novari/flyt/security/SourceApplication;
+	public final fun getClientIdProperty ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getId ()J
+	public final fun getPropertyPrefix ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lno/novari/flyt/security/SourceApplication;
+	public static fun values ()[Lno/novari/flyt/security/SourceApplication;
+}
+
+public final class no/novari/flyt/security/SourceApplication$Companion {
+	public final fun fromId (J)Lno/novari/flyt/security/SourceApplication;
 }
 
 public final class no/novari/flyt/security/SourceApplicationAuthority {

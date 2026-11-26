@@ -27,10 +27,15 @@ class FlytSecurityPropertiesTest {
     }
 
     @Test
-    fun `external needs client id, source application id and paths together`() {
+    fun `external needs source application and paths together`() {
         assertThatCode { external("/api/acos/**") }.doesNotThrowAnyException()
         assertThatThrownBy {
-            FlytSecurityProperties(external = FlytSecurityProperties.External(expectedClientId = "acos"))
+            FlytSecurityProperties(external = FlytSecurityProperties.External(listOf("/api/acos/**")))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+        assertThatThrownBy {
+            FlytSecurityProperties(
+                external = FlytSecurityProperties.External(sourceApplication = SourceApplication.ACOS),
+            )
         }.isInstanceOf(IllegalArgumentException::class.java)
     }
 
@@ -43,6 +48,6 @@ class FlytSecurityPropertiesTest {
 
     private fun external(path: String) =
         FlytSecurityProperties(
-            external = FlytSecurityProperties.External(listOf(path), 1, "acos"),
+            external = FlytSecurityProperties.External(listOf(path), SourceApplication.ACOS),
         )
 }

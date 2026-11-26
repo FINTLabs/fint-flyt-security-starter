@@ -11,7 +11,7 @@ who may call which route:
 | 1     | Public             | `/actuator/health/**`, `/actuator/prometheus`, `public-paths` | Anyone                   | permitAll                                                                 |
 | 2     | Internal client    | `/api/intern-klient/**`                                       | Other FLYT services      | Client token, `sub` in `authorized-client-ids`                            |
 | 3     | User               | `/api/intern/**`                                              | FLYT users               | Access token for the FLYT login from an allowed organization, role `USER` |
-| 4     | Source application | `external.paths`, e.g. `/api/acos/**`                         | The gateway's source app | Client token, `sub` is `expected-client-id`                               |
+| 4     | Source application | `external.paths`, e.g. `/api/acos/**`                         | The gateway's source app | Client token, `sub` is the source application's client ID                 |
 | 5     | Deny all           | Everything else, including other Actuator endpoints           | –                        | 401                                                                       |
 
 ## C4 level 1: System context

@@ -51,17 +51,18 @@ public class FlytSecurityProperties(
         public val authorizedClientIds: List<String> = emptyList(),
     )
 
-    /** The source application chain is only registered when [expectedClientId] is set. */
+    /**
+     * The source application chain is only registered when [sourceApplication] is set. The expected client ID is read
+     * from [SourceApplication.clientIdProperty].
+     */
     public class External(
         public val paths: List<String> = emptyList(),
-        public val sourceApplicationId: Long? = null,
-        public val expectedClientId: String? = null,
+        public val sourceApplication: SourceApplication? = null,
     ) {
         internal fun validate() {
-            if (paths.isEmpty() && sourceApplicationId == null && expectedClientId == null) return
+            if (paths.isEmpty() && sourceApplication == null) return
             val prefix = "novari.flyt.security.external"
-            require(!expectedClientId.isNullOrBlank()) { "$prefix.expected-client-id must be set" }
-            require(sourceApplicationId != null) { "$prefix.source-application-id must be set" }
+            require(sourceApplication != null) { "$prefix.source-application must be set, e.g. ACOS" }
             require(paths.isNotEmpty()) { "$prefix.paths must list the gateway's routes, e.g. /api/acos/**" }
             paths.forEach { path ->
                 val segments = path.removePrefix("/").split('/')

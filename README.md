@@ -17,12 +17,12 @@ See [docs/architecture.md](docs/architecture.md) for C4 diagrams.
 | 1     | `/actuator/health/**`, `/actuator/prometheus`, `public-paths` | Anyone                   | –                                                                                                                                       | permitAll                               |
 | 2     | `/api/intern-klient/**`                                       | Other FLYT service       | Client token (`aud` is `sub`, no `objectidentifier`)                                                                                    | `sub` in `authorized-client-ids`, 403   |
 | 3     | `/api/intern/**`                                              | FLYT user                | Access token (`scope`, no `nonce`/`at_hash`), `aud` is `user.audience`, `organizationid` is tenant or operator, `objectidentifier` UUID | `hasRole('USER')`, then `@PreAuthorize` |
-| 4     | `external.paths`, e.g. `/api/acos/**`                         | The gateway's source app | Client token, `sub` is `external.expected-client-id`                                                                                    | `SOURCE_APPLICATION_ID_<id>`            |
+| 4     | `external.paths`, e.g. `/api/acos/**`                         | The gateway's source app | Client token, `sub` is the source application's client ID                                                                               | `SOURCE_APPLICATION_ID_<id>`            |
 | 5     | Everything else                                               | –                        | –                                                                                                                                       | 401                                     |
 
 Every chain decodes with the app's `JwtDecoder` from Spring Boot (signature, time and issuer) and requires `exp`. The
 user chain is only registered when `user.audience` is set, and the source application chain only when
-`external.expected-client-id` is set. Otherwise their routes fall through to deny-all.
+`external.source-application` is set. Otherwise their routes fall through to deny-all.
 
 ## Roles
 
@@ -73,23 +73,37 @@ spring:
 
 On the external routes, `authentication.sourceApplicationId()` gives the gateway's source application.
 
+## Source applications
+
+`SourceApplication` lists the FLYT source applications, e.g. `SourceApplication.ACOS`. Use it in configuration and
+code. `id` is the stored and transmitted form (database, Kafka, REST) and stays a number. `clientIdProperty`
+(`fint.flyt.<app>.sso.client-id`) holds the source application's NAM client ID. A gateway loads it with `env` from the
+secret authorization-service owns:
+
+```yaml
+- name: fint.flyt.acos.sso.client-id
+  valueFrom:
+    secretKeyRef:
+      name: fint-flyt-acos-oauth2-client
+      key: fint.flyt.acos.sso.client-id
+```
+
 ## Configuration
 
-| Property                                                     | Default                                                      | Description                                                                                                      |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `novari.flyt.security.tenant.org-ids`                        | `${fint.org-id}`                                             | The namespace's organization, set by flaiserator.                                                                |
-| `novari.flyt.security.tenant.additional-org-ids`             | –                                                            | Extra tenant organizations (afk, bfk and ofk: `viken.no,frid-iks.no`).                                           |
-| `novari.flyt.security.roles.tenant-max-role`                 | `USER`                                                       | Highest role for tenant users.                                                                                   |
-| `novari.flyt.security.roles.operator-org-ids`                | `vigo.no,novari.no`                                          | Operator organizations.                                                                                          |
-| `novari.flyt.security.roles.operator-max-role`               | `DEVELOPER`                                                  | Highest role for operator users.                                                                                 |
-| `novari.flyt.security.user.audience`                         | –                                                            | `fint.sso.client-id` from the secret `fint-flyt-auth-forward-sso`. Turns on the user chain.                      |
-| `novari.flyt.security.internal-client.authorized-client-ids` | `${fint.flyt.authorization.sso.client-id}`                   | Clients allowed on `/api/intern-klient/**`.                                                                      |
-| `novari.flyt.security.external.paths`                        | –                                                            | The gateway's routes, explicit under `/api` (e.g. `/api/acos/**`). `/api/**` and `/api/intern*` fail at startup. |
-| `novari.flyt.security.external.source-application-id`        | –                                                            | The gateway's source application. Replaced by a `SourceApplication` registry after the Acos pilot (FFS-2430).    |
-| `novari.flyt.security.external.expected-client-id`           | –                                                            | The source application's client ID. Turns on the source application chain.                                       |
-| `novari.flyt.security.public-paths`                          | –                                                            | Exact Swagger routes. Patterns that can match `/api` (e.g. `/api/**`, `/**`) fail at startup.                    |
-| `novari.flyt.security.authorization.base-url`                | `http://fint-flyt-authorization-service:8080` + context path | authorization-service.                                                                                           |
-| `spring.security.oauth2.resourceserver.jwt.issuer-uri`       | `https://idp.felleskomponent.no/nidp/oauth/nam`              | NAM.                                                                                                             |
+| Property                                                     | Default                                                      | Description                                                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `novari.flyt.security.tenant.org-ids`                        | `${fint.org-id}`                                             | The namespace's organization, set by flaiserator.                                                                        |
+| `novari.flyt.security.tenant.additional-org-ids`             | –                                                            | Extra tenant organizations (afk, bfk and ofk: `viken.no,frid-iks.no`).                                                   |
+| `novari.flyt.security.roles.tenant-max-role`                 | `USER`                                                       | Highest role for tenant users.                                                                                           |
+| `novari.flyt.security.roles.operator-org-ids`                | `vigo.no,novari.no`                                          | Operator organizations.                                                                                                  |
+| `novari.flyt.security.roles.operator-max-role`               | `DEVELOPER`                                                  | Highest role for operator users.                                                                                         |
+| `novari.flyt.security.user.audience`                         | –                                                            | `fint.sso.client-id` from the secret `fint-flyt-auth-forward-sso`. Turns on the user chain.                              |
+| `novari.flyt.security.internal-client.authorized-client-ids` | `${fint.flyt.authorization.sso.client-id}`                   | Clients allowed on `/api/intern-klient/**`.                                                                              |
+| `novari.flyt.security.external.paths`                        | –                                                            | The gateway's routes, explicit under `/api` (e.g. `/api/acos/**`). `/api/**` and `/api/intern*` fail at startup.         |
+| `novari.flyt.security.external.source-application`           | –                                                            | The gateway's `SourceApplication`, e.g. `ACOS`. Turns on the source application chain, and needs its `clientIdProperty`. |
+| `novari.flyt.security.public-paths`                          | –                                                            | Exact Swagger routes. Patterns that can match `/api` (e.g. `/api/**`, `/**`) fail at startup.                            |
+| `novari.flyt.security.authorization.base-url`                | `http://fint-flyt-authorization-service:8080` + context path | authorization-service.                                                                                                   |
+| `spring.security.oauth2.resourceserver.jwt.issuer-uri`       | `https://idp.felleskomponent.no/nidp/oauth/nam`              | NAM.                                                                                                                     |
 
 Set `user.audience` with `env`, not `envFrom`. The secret exposes `fint.sso.*`, which collides with other OAuth clients
 in the pod:
@@ -115,7 +129,7 @@ in the pod:
 | `novari.flyt.web-resource-server.security.api.*.enabled`                                  | Remove. The chains follow from the properties below.                                                |
 | `novari.flyt.web-resource-server.security.api.internal.authorized-org-id-role-pairs-json` | Remove from all overlays. Set `user.audience`, and `tenant.additional-org-ids` in afk, bfk and ofk. |
 | `novari.flyt.web-resource-server.security.api.internal-client.authorized-client-ids`      | `novari.flyt.security.internal-client.authorized-client-ids`, or remove to use the default.         |
-| `novari.flyt.web-resource-server.security.api.external.authorized-source-application-ids` | `external.paths`, `external.source-application-id` and `external.expected-client-id`.               |
+| `novari.flyt.web-resource-server.security.api.external.authorized-source-application-ids` | `external.paths` and `external.source-application`, and the `fint.flyt.<app>.sso.client-id` env.    |
 | `novari.flyt.web-resource-server.security.authorization.*`                                | `novari.flyt.security.authorization.*`                                                              |
 
 **Code:**
