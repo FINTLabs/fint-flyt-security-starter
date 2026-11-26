@@ -76,7 +76,6 @@ public class FlytSecurityProperties(
     public class Authorization(
         // flyt-security-defaults.yml adds the host app's context path.
         public val baseUrl: String = "http://fint-flyt-authorization-service:8080",
-        public val clientRegistrationId: String = "authorization-service",
     )
 
     private companion object {

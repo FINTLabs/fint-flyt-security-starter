@@ -20,10 +20,13 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.web.client.RestClient
 import java.time.Duration
 
+/** The OAuth2 client registration [FlytAccess] uses. Its presence turns [FlytAccess] on. */
+private const val CLIENT_REGISTRATION_ID = "authorization-service"
+
 /** [FlytAccess] against authorization-service, when the app has the `authorization-service` client registration. */
 @AutoConfiguration(after = [OAuth2ClientAutoConfiguration::class, FlytSecurityAutoConfiguration::class])
 @ConditionalOnProperty(
-    prefix = "spring.security.oauth2.client.registration.authorization-service",
+    prefix = "spring.security.oauth2.client.registration.$CLIENT_REGISTRATION_ID",
     name = ["client-id"],
 )
 public class FlytAccessAutoConfiguration {
@@ -60,7 +63,7 @@ public class FlytAccessAutoConfiguration {
         )
 
         val interceptor = OAuth2ClientHttpRequestInterceptor(authorizedClientManager)
-        interceptor.setClientRegistrationIdResolver { properties.authorization.clientRegistrationId }
+        interceptor.setClientRegistrationIdResolver { CLIENT_REGISTRATION_ID }
         // The default resolves the incoming caller, which would fetch one token per user.
         interceptor.setPrincipalResolver { APP_PRINCIPAL }
 

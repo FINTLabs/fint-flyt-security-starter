@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.web.server.ResponseStatusException
 
 /** Signed tokens through the app's real `JwtDecoder` and the library's filter chains. */
 @AutoConfigureTestRestTemplate
@@ -110,6 +111,55 @@ class FlytSecurityHttpTest {
 
         assertStatus("/api/intern/source-applications/1", TestTokens.user(), HttpStatus.OK)
         assertStatus("/api/intern/source-applications/2", TestTokens.user(), HttpStatus.FORBIDDEN)
+    }
+
+    @Test
+    fun `authorization-service outage gives 503, not 401`() {
+        `when`(flytAccess.hasSourceApplication(3))
+            .thenThrow(ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Unable to verify user access"))
+
+        assertStatus("/api/intern/source-applications/3", TestTokens.user(), HttpStatus.SERVICE_UNAVAILABLE)
+    }
+
+    @Test
+    fun `the error page is not reachable directly`() {
+        assertStatus("/error", null, HttpStatus.UNAUTHORIZED)
+    }
+
+    @Test
+    fun `no session is created, so a cookie cannot replace the token`() {
+        val response = get("/api/intern/test", TestTokens.user())
+
+        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(response.headers[HttpHeaders.SET_COOKIE]).isNull()
+    }
+
+    @Test
+    fun `token from another issuer gives 401`() {
+        assertStatus(
+            "/api/intern/test",
+            TestTokens.user { it.issuer("https://other.idp/nidp/oauth/nam") },
+            HttpStatus.UNAUTHORIZED,
+        )
+        assertStatus(
+            "/api/intern-klient/test",
+            TestTokens.client(INTERNAL_CLIENT_ID) { it.issuer("https://other.idp/nidp/oauth/nam") },
+            HttpStatus.UNAUTHORIZED,
+        )
+    }
+
+    @ParameterizedTest(name = "user token {0} gives 401")
+    @CsvSource("without scope", "with nonce", "with at_hash")
+    fun `each ID token claim alone gives 401`(case: String) {
+        val token =
+            TestTokens.user {
+                when (case) {
+                    "without scope" -> it.claims { claims -> claims.remove("scope") }
+                    "with nonce" -> it.claim("nonce", "n-0S6_WzA2Mj")
+                    else -> it.claim("at_hash", "77QmUPtjPfzWtF2AnpK9RQ")
+                }
+            }
+        assertStatus("/api/intern/test", token, HttpStatus.UNAUTHORIZED)
     }
 
     @Test

@@ -89,7 +89,6 @@ On the external routes, `authentication.sourceApplicationId()` gives the gateway
 | `novari.flyt.security.external.expected-client-id`           | –                                                            | The source application's client ID. Turns on the source application chain.                                       |
 | `novari.flyt.security.public-paths`                          | –                                                            | Exact Swagger routes. Patterns that can match `/api` (e.g. `/api/**`, `/**`) fail at startup.                    |
 | `novari.flyt.security.authorization.base-url`                | `http://fint-flyt-authorization-service:8080` + context path | authorization-service.                                                                                           |
-| `novari.flyt.security.authorization.client-registration-id`  | `authorization-service`                                      | OAuth2 client registration for `FlytAccess`.                                                                     |
 | `spring.security.oauth2.resourceserver.jwt.issuer-uri`       | `https://idp.felleskomponent.no/nidp/oauth/nam`              | NAM.                                                                                                             |
 
 Set `user.audience` with `env`, not `envFrom`. The secret exposes `fint.sso.*`, which collides with other OAuth clients

@@ -1,5 +1,6 @@
 package no.novari.flyt.security
 
+import jakarta.servlet.DispatcherType
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -17,6 +18,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
@@ -146,10 +148,17 @@ public class FlytSecurityAutoConfiguration {
             .exceptionHandling {
                 it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 it.accessDeniedHandler(HttpStatusAccessDeniedHandler(HttpStatus.UNAUTHORIZED))
-            }.authorizeHttpRequests { it.anyRequest().denyAll() }
-            .build()
+            }.authorizeHttpRequests {
+                // The error page for a request a chain above already let through, such as 503 from FlytAccess.
+                it.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                it.anyRequest().denyAll()
+            }.build()
 
-    private fun HttpSecurity.common(): HttpSecurity = csrf { it.disable() }.httpBasic { it.disable() }
+    // Bearer tokens only: no session, so no session cookie can authenticate a request, and CSRF does not apply.
+    private fun HttpSecurity.common(): HttpSecurity =
+        csrf { it.disable() }
+            .httpBasic { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 
     private fun HttpSecurity.jwt(
         decoder: JwtDecoder,
