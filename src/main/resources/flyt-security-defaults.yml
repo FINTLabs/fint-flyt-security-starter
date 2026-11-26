@@ -1,0 +1,22 @@
+novari:
+  flyt:
+    security:
+      tenant:
+        # Set by flaiserator.
+        org-ids: ${fint.org-id:}
+      roles:
+        tenant-max-role: USER
+        operator-org-ids: vigo.no,novari.no
+        operator-max-role: DEVELOPER
+      internal-client:
+        authorized-client-ids: ${fint.flyt.authorization.sso.client-id:}
+      authorization:
+        # authorization-service runs with the same context path as the host app in each namespace.
+        base-url: 'http://fint-flyt-authorization-service:8080${server.servlet.context-path:}'
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://idp.felleskomponent.no/nidp/oauth/nam

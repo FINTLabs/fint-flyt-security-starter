@@ -1,0 +1,41 @@
+fint:
+  org-id: fintlabs.no
+  flyt:
+    authorization:
+      sso:
+        client-id: fint-flyt-authorization-oauth2-client
+    acos:
+      sso:
+        client-id: fint-flyt-acos-oauth2-client
+
+novari:
+  flyt:
+    security:
+      tenant:
+        additional-org-ids: viken.no
+      user:
+        audience: fint-flyt-auth-forward-sso
+      external:
+        paths: /api/acos/**
+        source-application: ACOS
+      public-paths: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          fint-idp:
+            token-uri: http://localhost/token
+        registration:
+          authorization-service:
+            authorization-grant-type: client_credentials
+            client-id: test-client
+            client-secret: test-secret
+            provider: fint-idp
